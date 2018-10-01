@@ -33,7 +33,7 @@ function getListOfCurrentCandidates(filename) {
 }
 
 // Create list from candidates including pairings with all other candidates minus previous pairings
-function getListOfPotentialMatches(candidates, previousPairings) {
+function getListOfPotentialPairings(candidates, previousPairings) {
     return candidates
         .reduce((acc, curr) => {
             acc.push({
@@ -49,16 +49,41 @@ function getListOfPotentialMatches(candidates, previousPairings) {
         }, []);
 }
 
-// Potential matches are
-// - created from other candidates in list, minus previously matched
-// - sorted by number of potential matches (increasing)
-// Pick random potential match
-// Remove potential match from list, and from other peoples potential matches
+function selectRandomPairings(potentialPairings) {
+    // For now, if there is an odd number, exclude the author
+    var initialPairings = potentialPairings.length % 2 === 0
+        ? []
+        : [{
+            "name": "Marcus Bristol",
+            "buddy": "himself"
+        }];
+
+    return potentialPairings.reduce((acc, curr) => {
+        // Ignore if already paired
+        if (acc.some(x => curr.name === x.name || curr.name === x.buddy)) return acc;
+        // Filter current pairings from list of potentials
+        var potentials = curr.buddies.filter(x => !acc.some(y => x === y.name || x === y.buddy));
+        // Select random buddy
+        var buddy = potentials[Math.floor(Math.random() * potentials.length)];
+        acc.push({
+            "name": curr.name,
+            "buddy": buddy
+        });
+        return acc;
+    }, initialPairings);
+}
+
+// Potential pairings are
+// - created from other candidates in list, minus previously paired
+// - sorted by number of potential pairings (increasing)
+// Pick random potential pair, excluding anyone already paired
 
 var candidates = getListOfCurrentCandidates(candidatesFile);
 var previousPairings = getListOfPreviousPairings(buddies);
-var potentialMatches = getListOfPotentialMatches(candidates, previousPairings)
+var potentialPairings = getListOfPotentialPairings(candidates, previousPairings)
     .sort((a, b) => a.buddies.length - b.buddies.length);
+var pairings = selectRandomPairings(potentialPairings);
 
-var v = potentialMatches.map(x => { return { "name": x.name, "count": x.buddies.length }});
-console.log(JSON.stringify(v, undefined, 2));
+
+// todo - display message and save to file
+console.log(JSON.stringify(pairings, undefined, 2));
