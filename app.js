@@ -73,6 +73,16 @@ function selectRandomPairings(potentialPairings) {
     }, initialPairings);
 }
 
+function displayPairings(pairings) {
+    console.log('@here Congratulations everyone!');
+    console.log('');
+    pairings.forEach(pair => {
+        console.log(`${pair.name} is having lunch with ${pair.buddy} this fortnight!`);
+    });
+    console.log('');
+    console.log('Remember, you have two weeks to complete your lunch buddy task (before the next draw). It doesn’t have to be lunch - other options are coffee, gym session, run, romantic walk around the park, etc. Its completely up to you - just get together sometime and have a chat.');
+}
+
 // Potential pairings are
 // - created from other candidates in list, minus previously paired
 // - sorted by number of potential pairings (increasing)
@@ -84,6 +94,4 @@ var potentialPairings = getListOfPotentialPairings(candidates, previousPairings)
     .sort((a, b) => a.buddies.length - b.buddies.length);
 var pairings = selectRandomPairings(potentialPairings);
 
-
-// todo - display message and save to file
-console.log(JSON.stringify(pairings, undefined, 2));
+displayPairings(pairings);
