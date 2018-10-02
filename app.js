@@ -1,12 +1,12 @@
-var fs = require('fs');
-var buddies = require("./buddies.json");
+const fs = require('fs');
+const buddies = require("./buddies.json");
 
-var candidatesFile = "./candidates.txt";
+const candidatesFile = "./candidates.txt";
 
 // Map lunch buddies results to list of members and their previous buddies
 function getListOfPreviousPairings(buddies) {
     function addBuddyToPerson(people, person, buddy) {
-        var p = people.find(x => x.name == person);
+        let p = people.find(x => x.name == person);
         if (p === undefined) {
             p = {
                 "name": person,
@@ -40,7 +40,7 @@ function getListOfPotentialPairings(candidates, previousPairings) {
                 "name": curr,
                 "buddies": candidates.filter(x => {
                     if (x === curr) return false;
-                    var p = previousPairings.find(x => x.name == curr);
+                    const p = previousPairings.find(x => x.name == curr);
                     if (p === undefined) return true;
                     return !p.buddies.some(y => x === y);
                 })
@@ -51,7 +51,7 @@ function getListOfPotentialPairings(candidates, previousPairings) {
 
 function selectRandomPairings(potentialPairings) {
     // For now, if there is an odd number, exclude the author
-    var initialPairings = potentialPairings.length % 2 === 0
+    let initialPairings = potentialPairings.length % 2 === 0
         ? []
         : [{
             "name": "Marcus Bristol",
@@ -62,9 +62,9 @@ function selectRandomPairings(potentialPairings) {
         // Ignore if already paired
         if (acc.some(x => curr.name === x.name || curr.name === x.buddy)) return acc;
         // Filter current pairings from list of potentials
-        var potentials = curr.buddies.filter(x => !acc.some(y => x === y.name || x === y.buddy));
+        const potentials = curr.buddies.filter(x => !acc.some(y => x === y.name || x === y.buddy));
         // Select random buddy
-        var buddy = potentials[Math.floor(Math.random() * potentials.length)];
+        const buddy = potentials[Math.floor(Math.random() * potentials.length)];
         acc.push({
             "name": curr.name,
             "buddy": buddy
@@ -88,10 +88,10 @@ function displayPairings(pairings) {
 // - sorted by number of potential pairings (increasing)
 // Pick random potential pair, excluding anyone already paired
 
-var candidates = getListOfCurrentCandidates(candidatesFile);
-var previousPairings = getListOfPreviousPairings(buddies);
-var potentialPairings = getListOfPotentialPairings(candidates, previousPairings)
+const candidates = getListOfCurrentCandidates(candidatesFile);
+const previousPairings = getListOfPreviousPairings(buddies);
+const potentialPairings = getListOfPotentialPairings(candidates, previousPairings)
     .sort((a, b) => a.buddies.length - b.buddies.length);
-var pairings = selectRandomPairings(potentialPairings);
+const pairings = selectRandomPairings(potentialPairings);
 
 displayPairings(pairings);
