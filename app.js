@@ -1,7 +1,11 @@
 const fs = require('fs');
 const buddies = require("./buddies.json");
 
-const candidatesFile = "./candidates.txt";
+const candidatesFile = process.argv[2];
+if (!candidatesFile) {
+    console.error('ERROR: Please provide a filename for the list of candidates');
+    process.exit(1);
+}
 
 // Map lunch buddies results to list of members and their previous buddies
 function getListOfPreviousPairings(buddies) {
