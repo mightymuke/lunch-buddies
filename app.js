@@ -1,20 +1,21 @@
 const fs = require('fs');
-const buddies = require("./buddies.json");
+const buddies = require('./buddies.json');
 
-const candidatesFile = process.argv[2];
-if (!candidatesFile) {
-    console.error('ERROR: Please provide a filename for the list of candidates');
-    process.exit(1);
+// Read current players from plain text file, one name per line
+function getListOfCurrentCandidates(filename) {
+    return fs.readFileSync(filename, 'utf8').toString().split('\n').filter(n => n);
 }
 
-// Map lunch buddies results to list of members and their previous buddies
+// Create a list of all people who have played, each containing a list of people they've previous paired with
+// - take the provided list of previous players (from the buddies file)
+// - remap it from list of pairs per date, to list of buddies per player
 function getListOfPreviousPairings(buddies) {
     function addBuddyToPerson(people, person, buddy) {
         let p = people.find(x => x.name == person);
         if (p === undefined) {
             p = {
-                "name": person,
-                "buddies": []
+                'name': person,
+                'buddies': []
             };
             people.push(p);
         }
@@ -31,18 +32,16 @@ function getListOfPreviousPairings(buddies) {
         }, []);
 }
 
-// Read candidates from plain text file, one name per line
-function getListOfCurrentCandidates(filename) {
-    return fs.readFileSync(filename, 'utf8').toString().split("\n").filter(n => n);
-}
-
-// Create list from candidates including pairings with all other candidates minus previous pairings
+// Create a list of players, each containing a list of people they haven't yet paired with
+// - candidates is current list of players
+// - previousPairings is a list of all previous players, with the people they paired with
+// - so, for each candidate, create a list of every other candidate filtering out any previously paired with
 function getListOfPotentialPairings(candidates, previousPairings) {
     return candidates
         .reduce((acc, curr) => {
             acc.push({
-                "name": curr,
-                "buddies": candidates.filter(x => {
+                'name': curr,
+                'buddies': candidates.filter(x => {
                     if (x === curr) return false;
                     const p = previousPairings.find(x => x.name == curr);
                     if (p === undefined) return true;
@@ -53,13 +52,16 @@ function getListOfPotentialPairings(candidates, previousPairings) {
         }, []);
 }
 
+// From list of players and their potential buddies, select a random buddy
+// - sort list by length of buddies, to give higher weighting to those who have fewer buddies to choose from
+// - for each candidate, remove any buddies already paired this round then select a random buddy from the remaining list
 function selectRandomPairings(potentialPairings) {
     // For now, if there is an odd number, exclude the author
     let initialPairings = potentialPairings.length % 2 === 0
         ? []
         : [{
-            "name": "Marcus Bristol",
-            "buddy": "himself"
+            'name': 'Marcus Bristol',
+            'buddy': 'himself'
         }];
 
     return potentialPairings.reduce((acc, curr) => {
@@ -70,14 +72,19 @@ function selectRandomPairings(potentialPairings) {
         // Select random buddy
         const buddy = potentials[Math.floor(Math.random() * potentials.length)];
         acc.push({
-            "name": curr.name,
-            "buddy": buddy
+                'name': curr.name,
+                'buddy': buddy
         });
         return acc;
     }, initialPairings);
 }
 
+// Display the new list of pairings
+// - this is a very specific format that can be copied and pasted into slack
+//   one day we might consider templates
+//   probably not
 function displayPairings(pairings) {
+    console.log('');
     console.log('@here Congratulations everyone!');
     console.log('');
     pairings.forEach(pair => {
@@ -91,6 +98,12 @@ function displayPairings(pairings) {
 // - created from other candidates in list, minus previously paired
 // - sorted by number of potential pairings (increasing)
 // Pick random potential pair, excluding anyone already paired
+
+const candidatesFile = process.argv[2];
+if (!candidatesFile) {
+    console.error('ERROR: Please provide a filename for the list of candidates');
+    process.exit(1);
+}
 
 const candidates = getListOfCurrentCandidates(candidatesFile);
 const previousPairings = getListOfPreviousPairings(buddies);
