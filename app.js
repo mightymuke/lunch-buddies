@@ -1,6 +1,7 @@
 const fs = require('fs');
 const rl = require('readline');
-const buddies = require('./buddies.json');
+const buddyFile = './buddies.json';
+const buddies = require(buddyFile);
 
 // Ask a question and return the answer in a promise
 function ask(question) {
@@ -139,6 +140,21 @@ function getConfirmedPairings(potentialPairings, counter) {
     });
 }
 
+// Adds newPairings to buddies and saves it to the buddies file
+function saveNewPairings(buddies, newPairings) {
+    if (!newPairings) return;
+    buddies = buddies || []
+
+    buddies.push({
+        'date-utc': new Date().toISOString(),
+        'buddies': newPairings
+    });
+
+    fs.writeFile(buddyFile, JSON.stringify(buddies, undefined, 2), 'utf8', function(err){
+        if (err) console.log(err);
+      })
+}
+
 // Potential pairings are
 // - created from other candidates in list, minus previously paired
 // - sorted by number of potential pairings (increasing)
@@ -155,5 +171,5 @@ const previousPairings = getListOfPreviousPairings(buddies);
 const potentialPairings = getListOfPotentialPairings(candidates, previousPairings);
 
 getConfirmedPairings(potentialPairings)
-    .then((pairings) => console.log(JSON.stringify(pairings, undefined, 2)))
+    .then((pairings) => saveNewPairings(buddies, pairings))
     .catch((err) => console.log(err.message));
