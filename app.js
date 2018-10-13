@@ -1,5 +1,21 @@
 const fs = require('fs');
+const rl = require('readline');
 const buddies = require('./buddies.json');
+
+// Ask a question and return the answer in a promise
+function ask(question) {
+    let r = rl.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: false
+    });
+    return new Promise((resolve, error) => {
+        r.question(question, answer => {
+            r.close();
+            resolve(answer);
+        });
+    })
+};
 
 // Read current players from plain text file, one name per line
 function getListOfCurrentCandidates(filename) {
@@ -64,19 +80,21 @@ function selectRandomPairings(potentialPairings) {
             'buddy': 'himself'
         }];
 
-    return potentialPairings.reduce((acc, curr) => {
-        // Ignore if already paired
-        if (acc.some(x => curr.name === x.name || curr.name === x.buddy)) return acc;
-        // Filter current pairings from list of potentials
-        const potentials = curr.buddies.filter(x => !acc.some(y => x === y.name || x === y.buddy));
-        // Select random buddy
-        const buddy = potentials[Math.floor(Math.random() * potentials.length)];
-        acc.push({
+    return potentialPairings
+        .sort((a, b) => a.buddies.length - b.buddies.length)
+        .reduce((acc, curr) => {
+            // Ignore if already paired
+            if (acc.some(x => curr.name === x.name || curr.name === x.buddy)) return acc;
+            // Filter current pairings from list of potentials
+            const potentials = curr.buddies.filter(x => !acc.some(y => x === y.name || x === y.buddy));
+            // Select random buddy
+            const buddy = potentials[Math.floor(Math.random() * potentials.length)];
+            acc.push({
                 'name': curr.name,
                 'buddy': buddy
-        });
-        return acc;
-    }, initialPairings);
+            });
+            return acc;
+        }, initialPairings);
 }
 
 // Display the new list of pairings
@@ -92,6 +110,33 @@ function displayPairings(pairings) {
     });
     console.log('');
     console.log('Remember, you have two weeks to complete your lunch buddy task (before the next draw). It doesn’t have to be lunch - other options are coffee, gym session, run, romantic walk around the park, etc. Its completely up to you - just get together sometime and have a chat.');
+    console.log('');
+}
+
+// Gets pairings and asks user to confirm them (max 3 tries)
+function getConfirmedPairings(potentialPairings, counter) {
+    counter = counter || 0;
+    if (counter >= 3) {
+        throw new Error('Unable to determine pairings - there must be a problem with the algorithm');
+    }
+
+    return new Promise((resolve) => {
+        let pairings = selectRandomPairings(potentialPairings);
+        displayPairings(pairings);
+        // Sometimes we don't have valid matchings. Should we run again, or just pair the invalid ones?
+        if (pairings.some(x => x.buddy === 'undefined')) {
+            console.log('*** WARNING - Failed matchings! ***\n')
+        }
+
+        ask('Are these results ok? (Y/N): ')
+            .then((answer) => {
+                const a = answer.trim().toLowerCase();
+                resolve((a === 'y' || a === 'yes') ? pairings : false);
+            });
+    })
+    .then((pairings) => {
+        return pairings ? pairings : getConfirmedPairings(potentialPairings, counter + 1);
+    });
 }
 
 // Potential pairings are
@@ -107,8 +152,8 @@ if (!candidatesFile) {
 
 const candidates = getListOfCurrentCandidates(candidatesFile);
 const previousPairings = getListOfPreviousPairings(buddies);
-const potentialPairings = getListOfPotentialPairings(candidates, previousPairings)
-    .sort((a, b) => a.buddies.length - b.buddies.length);
-const pairings = selectRandomPairings(potentialPairings);
+const potentialPairings = getListOfPotentialPairings(candidates, previousPairings);
 
-displayPairings(pairings);
+getConfirmedPairings(potentialPairings)
+    .then((pairings) => console.log(JSON.stringify(pairings, undefined, 2)))
+    .catch((err) => console.log(err.message));
