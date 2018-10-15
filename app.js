@@ -58,6 +58,7 @@ function getListOfPotentialPairings(candidates, previousPairings) {
         .reduce((acc, curr) => {
             acc.push({
                 'name': curr,
+                'times_played': previousPairings.filter(x => curr == x.name || x.buddies.some(y => curr == y)).length,
                 'buddies': candidates.filter(x => {
                     if (x === curr) return false;
                     const p = previousPairings.find(x => x.name == curr);
@@ -102,12 +103,22 @@ function selectRandomPairings(potentialPairings) {
 // - this is a very specific format that can be copied and pasted into slack
 //   one day we might consider templates
 //   probably not
-function displayPairings(pairings) {
+function displayPairings(pairings, potentialPairings) {
+    const firstTimers = potentialPairings.reduce((acc, curr) => {
+        if (curr.times_played == 0) {
+            acc.push(curr.name);
+        }
+        return acc;
+    }, []);
+
     console.log('');
     console.log('@here Congratulations everyone!');
     console.log('');
+    console.log(`Firstly, a warm welcome to our new buddies:\n- ${firstTimers.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'})).join('\n- ')}`);
+    console.log('');
+    console.log('Now - lets see who we\'re having lunch with:');
     pairings.forEach(pair => {
-        console.log(`${pair.name} is having lunch with ${pair.buddy} this fortnight!`);
+        console.log(`- ${pair.name} is having lunch with ${pair.buddy} this fortnight!`);
     });
     console.log('');
     console.log('Remember, you have two weeks to complete your lunch buddy task (before the next draw). It doesn’t have to be lunch - other options are coffee, gym session, run, romantic walk around the park, etc. Its completely up to you - just get together sometime and have a chat.');
@@ -123,7 +134,7 @@ function getConfirmedPairings(potentialPairings, counter) {
 
     return new Promise((resolve) => {
         let pairings = selectRandomPairings(potentialPairings);
-        displayPairings(pairings);
+        displayPairings(pairings, potentialPairings);
         // Sometimes we don't have valid matchings. Should we run again, or just pair the invalid ones?
         if (pairings.some(x => x.buddy === 'undefined')) {
             console.log('*** WARNING - Failed matchings! ***\n')
