@@ -28,7 +28,7 @@ function getListOfCurrentCandidates(filename) {
 // - remap it from list of pairs per date, to list of buddies per player
 function getListOfPreviousPairings(buddies) {
     function addBuddyToPerson(people, person, buddy) {
-        let p = people.find(x => x.name == person);
+        let p = people.find(x => x.name === person);
         if (p === undefined) {
             p = {
                 'name': person,
@@ -58,10 +58,10 @@ function getListOfPotentialPairings(candidates, previousPairings) {
         .reduce((acc, curr) => {
             acc.push({
                 'name': curr,
-                'times_played': previousPairings.filter(x => curr == x.name || x.buddies.some(y => curr == y)).length,
+                'times_played': previousPairings.filter(x => curr === x.name || x.buddies.some(y => curr === y)).length,
                 'buddies': candidates.filter(x => {
                     if (x === curr) return false;
-                    const p = previousPairings.find(x => x.name == curr);
+                    const p = previousPairings.find(x => x.name === curr);
                     if (p === undefined) return true;
                     return !p.buddies.some(y => x === y);
                 })
@@ -105,7 +105,7 @@ function selectRandomPairings(potentialPairings) {
 //   probably not
 function displayPairings(pairings, potentialPairings) {
     const firstTimers = potentialPairings.reduce((acc, curr) => {
-        if (curr.times_played == 0) {
+        if (curr.times_played === 0) {
             acc.push(curr.name);
         }
         return acc;
