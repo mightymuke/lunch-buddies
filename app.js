@@ -108,9 +108,13 @@ function displayPairings(pairings, potentialPairings) {
     console.log('');
     console.log('@here Congratulations everyone!');
     console.log('');
-    console.log(`Firstly, a warm welcome to our new buddies:\n- ${firstTimers.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'})).join('\n- ')}`);
-    console.log('');
-    console.log('Now - lets see who we\'re having lunch with:');
+    if (firstTimers.length > 0) {
+        console.log(`Firstly, a warm welcome to our new buddies:\n- ${firstTimers.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'})).join('\n- ')}`);
+        console.log('');
+        console.log('Now - lets see who we\'re having lunch with:');
+    } else {
+        console.log('Here are your lucky results:');
+    }
     pairings.forEach(pair => {
         console.log(`- ${pair[0]} is having lunch with ${pair.slice(1).join(', ')} this fortnight!`);
     });
